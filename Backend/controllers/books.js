@@ -2,6 +2,7 @@ const Book = require('../models/Books')
 const fs = require('fs')
 const sharp=require('sharp');
 const path=require('path');
+
 exports.createBook=(req,res)=>{
     const bookObject = JSON.parse(req.body.book);
     delete bookObject._id;
@@ -13,7 +14,7 @@ exports.createBook=(req,res)=>{
     sharp(req.file.buffer).resize({width:800}).jpeg({quality:70}).toFile(output)
     const book =new Book({
         ...bookObject,
-        _userId:req.auth._userId,
+        _userId:req.auth.userId,
         imageUrl:`${req.protocol}://${req.get('host')}/images/${filename}`
 
 
@@ -68,7 +69,7 @@ exports.modifyBook=(req,res)=>{
   
 
     
-    if(book._userId !== req.auth._userId){
+    if(book._userId !== req.auth.userId){
         return res.status(401).json({message:'Non autorisé'});
     }
     
@@ -98,7 +99,7 @@ exports.modifyBook=(req,res)=>{
             return Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id });
           });
       } else {
-        const bookObject = { ...req.body };
+        bookObject = { ...req.body };
         delete bookObject._userId;
         return Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id });
       }
@@ -139,4 +140,44 @@ exports.deleteBook=(req,res)=>{
     
     .catch(error => res.status(500).json({ error }));
 
+}
+
+
+exports.rateBook=(req,res)=>{
+    Book.findOne({_id: req.params.id})
+    .then((book)=>{
+        if (!book) {
+            return res.status(404).json({ message: 'Livre non trouvé' });
+        }
+
+        if(book.ratings.some((rating)=>rating.userId === req.auth.userId)){
+            return res.status(401).json({message:'Non-authorisé'})
+            
+
+        }
+        if (req.body.rating < 0 || req.body.rating > 5) {
+        return res.status(400).json({ message: 'Note invalide (0 à 5 autorisés).' });
+      }
+
+       
+            
+                book.ratings.push({
+                    userId:req.auth.userId,
+                    grade:req.body.rating
+
+                })
+                const total=book.ratings.reduce((sum, rating) => sum + rating.grade, 0) 
+                book.averageRating= total / book.ratings.length;
+               
+            
+         book.save()
+        .then((updatedBook) => res.status(200).json(updatedBook))
+        .catch((error) => res.status(500).json({ message: 'Erreur lors de l\'enregistrement', error }));
+    })
+
+            
+
+        
+    .catch(error => res.status(500).json({ error }));
+    
 }
