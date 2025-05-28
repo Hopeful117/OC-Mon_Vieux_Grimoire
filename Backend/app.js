@@ -1,16 +1,12 @@
 const express = require('express');
-const mongoose=require('mongoose')
+
 const app = express();
 const Book = require('./models/Books')
 const bookRoutes=require('./routes/book')
 const userRoutes=require('./routes/users')
 const path = require('path')
 
-require('dotenv').config()
-mongoose.connect(process.env.MONGODB_URl)
- 
-  .then(() => console.log('Connexion à MongoDB réussie !'))
-  .catch(() => console.log('Connexion à MongoDB échouée !'));
+
 
 app.use(express.json());
 
@@ -21,6 +17,7 @@ app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
   next();
 });
+
 
 app.use('/api/books',bookRoutes);
 app.use('/api/auth',userRoutes);
