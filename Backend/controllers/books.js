@@ -91,6 +91,12 @@ exports.getBookbyId=async(req,res)=>{
 exports.modifyBook=async(req,res)=>{
   try{
     let bookObject;
+    const bookId= req.params.id;
+
+
+      if (!mongoose.Types.ObjectId.isValid(bookId)) {
+    return res.status(400).json({ message: 'ID invalide' });
+    }
 
    
     const book=await Book.findOne({_id: req.params.id})
