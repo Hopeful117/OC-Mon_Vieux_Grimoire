@@ -218,7 +218,7 @@ exports.rateBook=async(req,res)=>{
         }
 
         
-        if (req.body.rating < 0 || req.body.rating > 5) {
+        if (req.body.rating < 0 || req.body.rating > 5 || !Number.isInteger(req.body.rating) ) {
         return res.status(400).json({ message: 'Note invalide (0 à 5 autorisés).' });
       }
 
@@ -234,7 +234,7 @@ exports.rateBook=async(req,res)=>{
 
           })
           const total=book.ratings.reduce((sum, rating) => sum + rating.grade, 0) 
-          book.averageRating= total / book.ratings.length;
+          book.averageRating= Math.round(total / book.ratings.length);
                
          try{   
         const updatedBook=await book.save()
